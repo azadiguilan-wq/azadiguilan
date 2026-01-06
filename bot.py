@@ -36,6 +36,44 @@ def send_welcome(message):
 def handle_all_messages(message):
     if message.chat.id == ADMIN_ID:
         return
+import telebot
+from telebot import types
+from flask import Flask
+from threading import Thread
+import os
+import datetime
+import pytz
+import time
+
+# ================= تنظیمات اختصاصی =================
+API_TOKEN = '8583284736:AAFZROjPTKIZFZdnKkMtAPs12a-lg3uMBBg'
+ADMIN_ID = 1129028195
+CHANNEL_ID = -1003568177280
+FOOTER_TEXT = "\n\n🆔 @azadiguilan\n🕊️ آزادی خواهان دانشگاه گیلان"
+# ======================================================
+
+bot = telebot.TeleBot(API_TOKEN)
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is Running!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    if message.chat.id == ADMIN_ID:
+        bot.reply_to(message, "✅ <b>مدیریت گرامی، سیستم فعال شد.</b>", parse_mode='HTML')
+    else:
+        bot.reply_to(message, "سلام! پیام را ارسال کنید تا به دست مدیریت برسد.")
+
+@bot.message_handler(content_types=['text', 'photo', 'video', 'document', 'voice', 'video_note'])
+def handle_all_messages(message):
+    if message.chat.id == ADMIN_ID:
+        return
 
     user = message.from_user
     tehran_tz = pytz.timezone('Asia/Tehran')
@@ -69,7 +107,7 @@ def handle_all_messages(message):
         bot.send_message(ADMIN_ID, "📝 <b>مدیریت:</b> برای پیام بالا چه تصمیمی می‌گیرید؟", reply_markup=markup, parse_mode='HTML')
         bot.reply_to(message, "✅ پیام با موفقیت برای مدیریت ارسال شد.")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error sending to admin: {e}")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -78,32 +116,24 @@ def callback_query(call):
 
     if action == "app":
         try:
-            # مرحله کلیدی: گرفتن خود پیام برای استخراج متن یا فایل
-            # ربات اول پیام را برای خودش فوروارد میکند تا به محتوا دسترسی پیدا کند
+            # فوروارد موقت برای دسترسی به محتوا
             temp_msg = bot.forward_message(ADMIN_ID, user_chat_id, msg_id)
             
             if temp_msg.content_type == 'text':
-                # ارسال متن جدید به کانال همراه با فوتر
                 bot.send_message(CHANNEL_ID, temp_msg.text + FOOTER_TEXT)
-            
             elif temp_msg.content_type == 'photo':
-                # ارسال عکس با کپشن جدید شامل فوتر
                 caption = (temp_msg.caption or "") + FOOTER_TEXT
                 bot.send_photo(CHANNEL_ID, temp_msg.photo[-1].file_id, caption=caption)
-            
             elif temp_msg.content_type == 'video':
                 caption = (temp_msg.caption or "") + FOOTER_TEXT
                 bot.send_video(CHANNEL_ID, temp_msg.video.file_id, caption=caption)
-            
             else:
-                # برای سایر فایل‌ها
                 bot.copy_message(CHANNEL_ID, user_chat_id, msg_id, caption=FOOTER_TEXT)
 
-            # پاک کردن پیام موقت از پی‌وی ادمین
             bot.delete_message(ADMIN_ID, temp_msg.message_id)
-            
             bot.answer_callback_query(call.id, "در کانال منتشر شد ✅")
-            bot.edit_message_text(f"✅ <b>این گزارش در @uniguilancrush منتشر شد.</b>", 
+            # اصلاح آیدی نمایش داده شده به مدیریت
+            bot.edit_message_text(f"✅ <b>این گزارش در @azadiguilan منتشر شد.</b>", 
                                  chat_id=ADMIN_ID, message_id=call.message.message_id, parse_mode='HTML')
         except Exception as e:
             bot.answer_callback_query(call.id, "خطا در ارسال!")
@@ -118,7 +148,10 @@ def callback_query(call):
 
 if __name__ == "__main__":
     Thread(target=run_flask, daemon=True).start()
+    
+    # بخش حیاتی برای جلوگیری از خطای Conflict 409
     bot.remove_webhook()
-    time.sleep(1)
+    time.sleep(2) 
+    
     print("--- 3-Step Full Bot is Online ---")
     bot.infinity_polling(timeout=20, skip_pending=True)

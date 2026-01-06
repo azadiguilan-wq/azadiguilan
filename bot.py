@@ -11,7 +11,7 @@ import time
 API_TOKEN = '8583284736:AAFZROjPTKIZFZdnKkMtAPs12a-lg3uMBBg'
 ADMIN_ID = 1129028195
 CHANNEL_ID = -100363020962
-FOOTER_TEXT = "\n\n🆔 @azadiguilan \n\n 🕊️آزادی خواهان دانشگاه گیلان"
+FOOTER_TEXT = "\n\n🆔 @azadiguilan \n\n🕊️آزادی خواهان دانشگاه گیلان"
 # ======================================================
 
 bot = telebot.TeleBot(API_TOKEN)

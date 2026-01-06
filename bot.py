@@ -8,7 +8,7 @@ import pytz
 import time
 
 # ================= تنظیمات اختصاصی =================
-API_TOKEN = '8583284736:AAFIdwqVwY8xF-p7D9jNfslKMm1IpJhfX4c'
+API_TOKEN = '8583284736:AAEFUqbwshidUEpvL6mOnjYjxTnyXvWH0bw'
 ADMIN_ID = 1129028195
 CHANNEL_ID = -1003568177280
 FOOTER_TEXT = "\n\n🆔 @azadiguilan \n\n🕊️آزادی خواهان دانشگاه گیلان"

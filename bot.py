@@ -94,6 +94,64 @@ def handle_all_messages(message):
         f"⏰ <b>ساعت (تهران):</b> {time_str}\n\n"
         f"🔗 <a href='{chat_link}'>ورود مستقیم به پی‌وی کاربر</a>\n"
         f"--------------------------"
+import telebot
+from telebot import types
+from flask import Flask
+from threading import Thread
+import os
+import datetime
+import pytz
+import time
+
+# ================= تنظیمات اختصاصی =================
+API_TOKEN = '8583284736:AAGhv4j_eLlEvJ9kNVA5r7hbdClkTS4u5WY'
+ADMIN_ID = 1129028195
+CHANNEL_ID = -1003568177280
+FOOTER_TEXT = "\n\n🆔 @azadiguilan\n🕊️ آزادی خواهان دانشگاه گیلان"
+# ======================================================
+
+bot = telebot.TeleBot(API_TOKEN)
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is Running!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    if message.chat.id == ADMIN_ID:
+        bot.reply_to(message, "✅ <b>مدیریت گرامی، سیستم فعال شد.</b>", parse_mode='HTML')
+    else:
+        bot.reply_to(message, "سلام! پیام را ارسال کنید تا به دست مدیریت برسد.")
+
+@bot.message_handler(content_types=['text', 'photo', 'video', 'document', 'voice', 'video_note'])
+def handle_all_messages(message):
+    if message.chat.id == ADMIN_ID:
+        return
+
+    user = message.from_user
+    tehran_tz = pytz.timezone('Asia/Tehran')
+    now = datetime.datetime.now(tehran_tz)
+    date_str = now.strftime('%Y/%m/%d')
+    time_str = now.strftime('%H:%M:%S')
+    chat_link = f"tg://user?id={user.id}"
+    
+    user_info = (
+        f"📩 <b>گزارش جدید دریافت شد</b>\n"
+        f"--------------------------\n"
+        f"👤 <b>نام:</b> {user.first_name}\n"
+        f"👤 <b>نام خانوادگی:</b> {user.last_name or 'ندارد'}\n"
+        f"🆔 <b>آیدی عددی:</b> <code>{user.id}</code>\n"
+        f"🆔 <b>یوزرنیم:</b> @{user.username or 'ندارد'}\n"
+        f"🌐 <b>زبان:</b> {user.language_code or 'نامشخص'}\n"
+        f"📅 <b>تاریخ:</b> {date_str}\n"
+        f"⏰ <b>ساعت (تهران):</b> {time_str}\n\n"
+        f"🔗 <a href='{chat_link}'>ورود مستقیم به پی‌وی کاربر</a>\n"
+        f"--------------------------"
     )
 
     markup = types.InlineKeyboardMarkup(row_width=2)
@@ -116,7 +174,7 @@ def callback_query(call):
 
     if action == "app":
         try:
-            # فوروارد موقت برای دسترسی به محتوا
+            # فوروارد موقت برای کپی محتوا
             temp_msg = bot.forward_message(ADMIN_ID, user_chat_id, msg_id)
             
             if temp_msg.content_type == 'text':
@@ -132,7 +190,6 @@ def callback_query(call):
 
             bot.delete_message(ADMIN_ID, temp_msg.message_id)
             bot.answer_callback_query(call.id, "در کانال منتشر شد ✅")
-            # اصلاح آیدی نمایش داده شده به مدیریت
             bot.edit_message_text(f"✅ <b>این گزارش در @azadiguilan منتشر شد.</b>", 
                                  chat_id=ADMIN_ID, message_id=call.message.message_id, parse_mode='HTML')
         except Exception as e:
@@ -144,6 +201,17 @@ def callback_query(call):
             bot.edit_message_text("❌ <b>این گزارش رد شد.</b>", 
                                  chat_id=ADMIN_ID, message_id=call.message.message_id, parse_mode='HTML')
             bot.answer_callback_query(call.id, "رد شد.")
+        except: pass
+
+if __name__ == "__main__":
+    Thread(target=run_flask, daemon=True).start()
+    
+    # رفع تداخل‌های احتمالی
+    bot.remove_webhook()
+    time.sleep(2) 
+    
+    print("--- 3-Step Full Bot is Online ---")
+    bot.infinity_polling(timeout=20, skip_pending=True)k_query(call.id, "رد شد.")
         except: pass
 
 if __name__ == "__main__":
